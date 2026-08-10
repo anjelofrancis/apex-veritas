@@ -40,6 +40,12 @@ jobs:
     - name: Prisma Generate
       run: npm run prisma:generate -w packages/api
 
+    - name: Prisma Migrate
+      env:
+        DATABASE_URL: postgresql://root:rootpassword@localhost:5432/apex_test?schema=public
+      run: npx prisma db push
+      working-directory: packages/api
+
     - name: Run Tests (API)
       env:
         DATABASE_URL: postgresql://root:rootpassword@localhost:5432/apex_test?schema=public

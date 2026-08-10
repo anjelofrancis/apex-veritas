@@ -19,7 +19,7 @@ describe('Security Check: Cross-Tenant Data Isolation', () => {
     // and forces it to their own req.user.clientId. We test that this security boundary holds.
     
     const response = await request(app)
-      .get('/api/v1/documents?clientId=clientB_789')
+      .get('/api/documents?clientId=clientB_789')
       .set('Authorization', `Bearer ${mockToken}`);
     
     // The API should either return 403 Forbidden if it detects an illegal cross-tenant attempt,
