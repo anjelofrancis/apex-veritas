@@ -12,7 +12,7 @@ describe('Security Check: Cross-Tenant Data Isolation', () => {
       id: 'userA_123',
       clientId: 'clientA_456',
       role: 'CLIENT_USER'
-    }, process.env.JWT_SECRET || 'secret');
+    }, process.env.JWT_ACCESS_SECRET || 'test_secret');
 
     // Attempt to request documents, explicitly trying to query Client B's data
     // In our architecture, the backend ignores req.query.clientId for CLIENT_USERs

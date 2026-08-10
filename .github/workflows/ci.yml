@@ -49,7 +49,7 @@ jobs:
     - name: Run Tests (API)
       env:
         DATABASE_URL: postgresql://root:rootpassword@localhost:5432/apex_test?schema=public
-        JWT_SECRET: test_secret
+        JWT_ACCESS_SECRET: test_secret
       run: npm test -w packages/api
 
     - name: Build Web
