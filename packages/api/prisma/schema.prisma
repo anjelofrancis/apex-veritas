@@ -1,0 +1,522 @@
+// Apex Veritas — Core Database Schema
+// Multi-tenant SaaS: every business record hangs off a Client (tenant).
+// Run `npm run prisma:migrate --workspace=packages/api` to create the DB.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// TENANCY, AUTH & RBAC
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN      // Apex Veritas internal — full platform control
+  CONSULTANT       // Virtual HSEQ Manager / internal staff serving clients
+  CLIENT_ADMIN     // Primary account owner on the client side
+  CLIENT_USER      // Sub-user with scoped permissions
+}
+
+enum ClientStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+}
+
+model Client {
+  id            String        @id @default(cuid())
+  name          String
+  jurisdiction  String        // e.g. "Kenya", "UAE" — drives legal register filtering
+  industry      String?
+  status        ClientStatus  @default(TRIAL)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  users              User[]
+  subscriptions      Subscription[]
+  legalRegisterItems LegalRegisterItem[]
+  documents          Document[]
+  documentFolders    DocumentFolder[]
+  audits             Audit[]
+  incidents          Incident[]
+  courses            Course[]
+  trainingRecords    TrainingRecord[]
+  tasks              Task[]
+  activityLogs       ActivityLog[]
+  notifications      Notification[]
+  complianceScores   ComplianceScoreHistory[]
+  orders             Order[]
+
+  @@map("clients")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  clientId     String?   // null for internal Apex Veritas staff (SUPER_ADMIN/CONSULTANT)
+  client       Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole
+  mfaSecret    String?
+  mfaEnabled   Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  permissions        UserPermission[]
+  assignedTasks      Task[]                 @relation("TaskAssignee")
+  reportedIncidents  Incident[]             @relation("IncidentReporter")
+  investigations      IncidentInvestigation[] @relation("Investigator")
+  auditsCreated      Audit[]                @relation("AuditCreatedBy")
+  documentsUploaded  Document[]             @relation("DocumentUploadedBy")
+  trainingRecords    TrainingRecord[]
+  activityLogs       ActivityLog[]
+  notifications      Notification[]
+
+  @@index([clientId])
+  @@map("users")
+}
+
+// Granular permission overrides on top of role (for CLIENT_USER sub-users)
+model UserPermission {
+  id         String @id @default(cuid())
+  userId     String
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module     String // e.g. "documents", "audits", "incidents"
+  canView    Boolean @default(true)
+  canCreate  Boolean @default(false)
+  canEdit    Boolean @default(false)
+  canDelete  Boolean @default(false)
+
+  @@unique([userId, module])
+  @@map("user_permissions")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. "document.upload", "audit.close"
+  entityType String?
+  entityId   String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@map("activity_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   String   // "in_app" | "email" | "whatsapp"
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// SUBSCRIPTIONS & BILLING (Stripe)
+// ---------------------------------------------------------------------------
+
+enum PlanTier {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  clientId         String
+  client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  planTier         PlanTier
+  status           SubscriptionStatus @default(TRIALING)
+  stripeCustomerId String?
+  stripeSubId      String?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  invoices Invoice[]
+
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  stripeInvoiceId String?
+  amountDue      Int          // cents
+  currency       String       @default("usd")
+  status         String
+  issuedAt       DateTime     @default(now())
+
+  @@map("invoices")
+}
+
+// ---------------------------------------------------------------------------
+// COMPLIANCE MODULE
+// ---------------------------------------------------------------------------
+
+model LegalRegisterItem {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jurisdiction  String
+  regulationRef String
+  title         String
+  description   String?
+  obligation    String
+  dueDate       DateTime?
+  status        String   @default("open") // open | in_progress | met | overdue
+  evidenceUrl   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([clientId])
+  @@map("legal_register_items")
+}
+
+model ComplianceScoreHistory {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  score     Int      // 0-100
+  recordedAt DateTime @default(now())
+
+  @@index([clientId])
+  @@map("compliance_score_history")
+}
+
+// ---------------------------------------------------------------------------
+// DOCUMENT MANAGEMENT
+// ---------------------------------------------------------------------------
+
+model DocumentFolder {
+  id        String           @id @default(cuid())
+  clientId  String
+  client    Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    DocumentFolder?  @relation("FolderChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children  DocumentFolder[] @relation("FolderChildren")
+  name      String
+  createdAt DateTime         @default(now())
+
+  documents Document[]
+
+  @@index([clientId])
+  @@map("document_folders")
+}
+
+model Document {
+  id             String           @id @default(cuid())
+  clientId       String
+  client         Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  folderId       String?
+  folder         DocumentFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  title          String
+  currentVersion Int              @default(1)
+  storageKey     String           // S3 object key of latest version
+  expiryDate     DateTime?
+  approvalStatus String           @default("draft") // draft | pending_approval | approved | rejected
+  uploadedById   String
+  uploadedBy     User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  versions DocumentVersion[]
+
+  @@index([clientId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    Int
+  storageKey String
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, version])
+  @@map("document_versions")
+}
+
+// ---------------------------------------------------------------------------
+// AUDIT MANAGEMENT
+// ---------------------------------------------------------------------------
+
+enum AuditType {
+  INTERNAL
+  EXTERNAL
+  SUPPLIER
+}
+
+enum AuditStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Audit {
+  id            String       @id @default(cuid())
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type          AuditType
+  status        AuditStatus  @default(SCHEDULED)
+  title         String
+  scheduledDate DateTime
+  createdById   String
+  createdBy     User         @relation("AuditCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime     @default(now())
+
+  checklistItems AuditChecklistItem[]
+  findings       AuditFinding[]
+
+  @@index([clientId])
+  @@map("audits")
+}
+
+model AuditChecklistItem {
+  id        String   @id @default(cuid())
+  auditId   String
+  audit     Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  question  String
+  response  String?  // pass | fail | n/a | free text
+  evidenceUrl String?
+  order     Int      @default(0)
+
+  @@map("audit_checklist_items")
+}
+
+model AuditFinding {
+  id          String   @id @default(cuid())
+  auditId     String
+  audit       Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  description String
+  severity    String   // minor | major | critical
+  status      String   @default("open") // open | in_progress | closed
+  createdAt   DateTime @default(now())
+
+  capaActions CapaAction[]
+
+  @@map("audit_findings")
+}
+
+// ---------------------------------------------------------------------------
+// INCIDENT MANAGEMENT
+// ---------------------------------------------------------------------------
+
+enum IncidentSeverity {
+  NEAR_MISS
+  MINOR
+  MODERATE
+  MAJOR
+  FATALITY
+}
+
+enum IncidentStatus {
+  REPORTED
+  INVESTIGATING
+  CAPA_IN_PROGRESS
+  CLOSED
+}
+
+model Incident {
+  id           String           @id @default(cuid())
+  clientId     String
+  client       Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  reportedById String
+  reportedBy   User             @relation("IncidentReporter", fields: [reportedById], references: [id])
+  severity     IncidentSeverity
+  status       IncidentStatus   @default(REPORTED)
+  location     String?
+  description  String
+  occurredAt   DateTime
+  createdAt    DateTime         @default(now())
+
+  investigation IncidentInvestigation?
+  capaActions   CapaAction[]
+
+  @@index([clientId])
+  @@map("incidents")
+}
+
+model IncidentInvestigation {
+  id            String    @id @default(cuid())
+  incidentId    String    @unique
+  incident      Incident  @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  investigatorId String
+  investigator  User      @relation("Investigator", fields: [investigatorId], references: [id])
+  method        String?   // "5-why" | "fishbone"
+  rootCause     String?
+  findings      Json?
+  completedAt   DateTime?
+
+  @@map("incident_investigations")
+}
+
+// Shared CAPA (Corrective & Preventive Action) — linked from audit findings and incidents
+model CapaAction {
+  id          String        @id @default(cuid())
+  auditFindingId String?
+  auditFinding   AuditFinding? @relation(fields: [auditFindingId], references: [id], onDelete: Cascade)
+  incidentId  String?
+  incident    Incident?     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  description String
+  ownerUserId String?
+  dueDate     DateTime?
+  status      String        @default("open") // open | in_progress | verified | closed
+  createdAt   DateTime      @default(now())
+
+  @@map("capa_actions")
+}
+
+// ---------------------------------------------------------------------------
+// TRAINING & COMPETENCY
+// ---------------------------------------------------------------------------
+
+model Course {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  validityMonths Int?  // certificate validity period, if any
+
+  trainingRecords TrainingRecord[]
+
+  @@index([clientId])
+  @@map("courses")
+}
+
+model TrainingRecord {
+  id            String    @id @default(cuid())
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedAt   DateTime?
+  certificateUrl String?
+  expiryDate    DateTime?
+  status        String    @default("assigned") // assigned | in_progress | completed | expired
+
+  @@index([clientId])
+  @@map("training_records")
+}
+
+// ---------------------------------------------------------------------------
+// TASKS
+// ---------------------------------------------------------------------------
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  clientId    String
+  client      Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  assigneeId  String?
+  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dueDate     DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([clientId])
+  @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// TEMPLATES STORE (public e-commerce)
+// ---------------------------------------------------------------------------
+
+model TemplateProduct {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  priceCents  Int
+  isSubscription Boolean @default(false)
+  storageKey  String
+  createdAt   DateTime @default(now())
+
+  orderItems OrderItem[]
+
+  @@map("template_products")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  clientId    String?
+  client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  email       String
+  totalCents  Int
+  status      String      @default("pending") // pending | paid | fulfilled | refunded
+  createdAt   DateTime    @default(now())
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String          @id @default(cuid())
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    TemplateProduct @relation(fields: [productId], references: [id])
+  priceCents Int
+
+  @@map("order_items")
+}
+
+/// Enquiries from the public marketing site. Not tenant-scoped — a sender has
+/// no account yet, which is the point.
+model ContactMessage {
+  id          String   @id @default(cuid())
+  fullName    String
+  email       String
+  message     String
+  handledAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("contact_messages")
+}

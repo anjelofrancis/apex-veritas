@@ -1,0 +1,26 @@
+{
+  "name": "apex-veritas",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Apex Veritas — Virtual HSEQ & Compliance SaaS Platform (monorepo)",
+  "workspaces": [
+    "packages/api",
+    "packages/portal",
+    "packages/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=packages/api",
+    "dev:portal": "npm run dev --workspace=packages/portal",
+    "dev:web": "npm run dev --workspace=packages/web",
+    "prisma:generate": "npm run prisma:generate --workspace=packages/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace=packages/api",
+    "prisma:seed": "npm run prisma:seed --workspace=packages/api",
+    "prisma:studio": "npm run prisma:studio --workspace=packages/api"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
+  }
+}

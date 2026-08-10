@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-background: #EDF2F4;
+    --color-bg-surface: #FFFFFF;
+    --color-border-divider: #C7D6DD;
+    --color-text-primary: #16222E;
+    --color-text-secondary: #1B3A56;
+    --color-text-muted: #6B7280;
+    --color-amber: #D98E2B;
+    --color-amber-grad1: #D98E2B;
+    --color-amber-grad2: #F59E0B;
+    --color-teal: #2F7D6E;
+    --color-teal-grad: #14B8A6;
+    --color-oxide: #B23A34;
+  }
+
+  .dark {
+    --color-bg-background: #0A0F1C;
+    --color-bg-surface: #1F2937;
+    --color-border-divider: rgba(255,255,255,0.08);
+    --color-text-primary: #F9FAFB;
+    --color-text-secondary: #9CA3AF;
+    --color-text-muted: #6B7280;
+    --color-amber: #F59E0B;
+    --color-amber-grad1: #EF4444;
+    --color-amber-grad2: #F97316;
+    --color-teal: #14B8A6;
+    --color-teal-grad: #06B6D4;
+    --color-oxide: #EF4444;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-body antialiased transition-colors duration-300;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-text-primary;
+  }
+}
+
+@layer components {
+  /* Glass card component */
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/5 border border-divider rounded-2xl shadow-xl transition-all duration-300;
+  }
+
+  /* Gradient text utility */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber to-amber-grad1;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-gradient-amber text-white
+           font-body font-semibold text-sm rounded-lg shadow-lg hover:shadow-[0_0_20px_rgba(245,158,11,0.5)] transition-all duration-300
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-white/5 backdrop-blur-sm text-text-primary
+           font-body font-semibold text-sm rounded-lg border border-divider hover:border-amber hover:bg-white/10 transition-all duration-300
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-tertiary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-text-secondary
+           font-body font-medium text-sm hover:text-text-primary transition-colors
+           relative after:content-[''] after:absolute after:bottom-1 after:left-5 after:w-[calc(100%-40px)] after:h-px after:bg-gradient-amber after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300;
+  }
+
+  /* Updated title block and drawing frame for dark mode */
+  .title-block {
+    @apply inline-flex items-center gap-3 backdrop-blur-md bg-white/5 border border-divider rounded-lg px-4 py-2
+           font-mono text-[11px] uppercase tracking-widest text-text-secondary;
+  }
+  .title-block dt {
+    @apply text-text-muted;
+  }
+  .title-block dd {
+    @apply text-text-primary font-semibold;
+  }
+
+  .drawing-frame {
+    @apply relative border border-divider rounded-2xl;
+  }
+  .drawing-frame::before,
+  .drawing-frame::after {
+    content: '';
+    @apply absolute w-4 h-4 border-amber rounded-sm transition-all duration-500 opacity-50;
+  }
+  .drawing-frame::before {
+    @apply -top-1 -left-1 border-t-2 border-l-2;
+  }
+  .drawing-frame::after {
+    @apply -bottom-1 -right-1 border-b-2 border-r-2;
+  }
+  .drawing-frame:hover::before,
+  .drawing-frame:hover::after {
+    @apply opacity-100 w-6 h-6;
+  }
+}
+
+/* Scrollbar for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0F1C; 
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2937; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #374151; 
+}
+
+/* Base utility for scroll animation */
+.is-visible {
+  @apply opacity-100 translate-y-0;
+}

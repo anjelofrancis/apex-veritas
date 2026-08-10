@@ -1,0 +1,53 @@
+name: Apex Veritas CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: rootpassword
+          POSTGRES_DB: apex_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Prisma Generate
+      run: npm run prisma:generate -w packages/api
+
+    - name: Run Tests (API)
+      env:
+        DATABASE_URL: postgresql://root:rootpassword@localhost:5432/apex_test?schema=public
+        JWT_SECRET: test_secret
+      run: npm test -w packages/api
+
+    - name: Build Web
+      run: npm run build -w packages/web
+
+    - name: Build Portal
+      run: npm run build -w packages/portal
