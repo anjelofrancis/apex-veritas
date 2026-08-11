@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const prisma = require('../../config/db');
+const prisma = require('../config/db');
 const logger = require('../utils/logger');
 const { sendContactNotification } = require('../utils/mailer');
 const { sendWhatsAppMessage } = require('../utils/whatsapp');
