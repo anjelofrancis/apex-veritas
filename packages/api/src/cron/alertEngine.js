@@ -1,12 +1,11 @@
 const cron = require('node-cron');
 const prisma = require('../config/db');
-const logger = require('../utils/logger');
 const { sendContactNotification } = require('../utils/mailer');
 const { sendWhatsAppMessage } = require('../utils/whatsapp');
 
 // Run every day at 08:00 AM
 cron.schedule('0 8 * * *', async () => {
-  logger.info('Running daily Alert Engine cron job...');
+  console.log('Running daily Alert Engine cron job...');
 
   try {
     const today = new Date();
@@ -41,7 +40,7 @@ cron.schedule('0 8 * * *', async () => {
       // WhatsApp notification
       const targetPhone = doc.uploadedBy.phoneNumber || '+254745333763';
       if (!doc.uploadedBy.phoneNumber) {
-        logger.info(`User ${doc.uploadedBy.email} has no registered phone number. Using fallback number: ${targetPhone}`);
+        console.log(`User ${doc.uploadedBy.email} has no registered phone number. Using fallback number: ${targetPhone}`);
       }
       sendWhatsAppMessage(targetPhone, message);
     }
@@ -64,11 +63,11 @@ cron.schedule('0 8 * * *', async () => {
       
       // Since CAPA might not have an owner explicitly assigned in our simple seed,
       // we could alert the client admin. For now, sending a general alert.
-      logger.info(message);
+      console.log(message);
     }
 
-    logger.info(`Alert Engine completed. Processed ${expiringDocuments.length} expiring documents and ${overdueCapas.length} overdue CAPAs.`);
+    console.log(`Alert Engine completed. Processed ${expiringDocuments.length} expiring documents and ${overdueCapas.length} overdue CAPAs.`);
   } catch (error) {
-    logger.error('Error running Alert Engine:', error);
+    console.error('Error running Alert Engine:', error);
   }
 });
