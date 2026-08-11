@@ -65,6 +65,7 @@ model User {
   passwordHash String
   firstName    String
   lastName     String
+  phoneNumber  String?
   role         UserRole
   mfaSecret    String?
   mfaEnabled   Boolean   @default(false)

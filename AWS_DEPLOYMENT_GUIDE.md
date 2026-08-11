@@ -59,13 +59,18 @@ We have written an automated script to install Node, Nginx, and PM2 on your fres
    DATABASE_URL="postgresql://postgres:password@rds-endpoint:5432/apex"
    JWT_ACCESS_SECRET="generate-a-long-secure-random-string-here"
    JWT_REFRESH_SECRET="generate-another-long-secure-string"
-   STRIPE_SECRET_KEY="sk_live_..."
+   PAYSTACK_SECRET_KEY="sk_live_..."
+   PAYSTACK_PUBLIC_KEY="pk_live_..."
+   PAYSTACK_PLAN_STARTER="PLN_..."
+   PAYSTACK_PLAN_PROFESSIONAL="PLN_..."
+   PAYSTACK_PLAN_ENTERPRISE="PLN_..."
    AWS_ACCESS_KEY_ID="AKIA..."
    AWS_SECRET_ACCESS_KEY="..."
    S3_BUCKET="your-document-bucket"
    TWILIO_ACCOUNT_SID="..."
    TWILIO_AUTH_TOKEN="..."
-   CORS_ORIGINS="http://<EC2-PUBLIC-IP>,http://<S3-BUCKET-URL>"
+   TWILIO_FROM_PHONE="whatsapp:+14155238886"
+   CORS_ORIGINS="http://apex-veritas-portal.s3-website-us-east-1.amazonaws.com,http://apex-veritas.s3-website-us-east-1.amazonaws.com"
    ```
    Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
 
@@ -76,21 +81,21 @@ We have written an automated script to install Node, Nginx, and PM2 on your fres
    ```
    *The script will install all dependencies, build the reverse proxy, run database migrations, and boot up the API via PM2.*
 
-**To test if your API is live:** Open `http://<EC2-PUBLIC-IP>/api/health` in your browser. You should see `{"status":"ok"}`.
+**To test if your API is live:** Open `http://54.162.123.207/api/health` in your browser. You should see `{"status":"ok"}`.
 
 ---
 
 ## 4. Deploy the Frontends (Amazon S3)
 We will host your React SPAs in S3 buckets for the fastest performance.
 1. Navigate to **S3** and create two buckets:
-   - `apex-veritas-web-prod`
-   - `apex-veritas-portal-prod`
+   - `apex-veritas` → http://apex-veritas.s3-website-us-east-1.amazonaws.com
+   - `apex-veritas-portal` → http://apex-veritas-portal.s3-website-us-east-1.amazonaws.com
 2. For both buckets, uncheck **Block all public access** and acknowledge the warning.
 3. Once created, go to the **Properties** tab of each bucket, scroll to the bottom, and enable **Static website hosting**. Note the endpoint URLs.
 4. On your local machine (where you write code), edit the deployment script:
    - Open `infrastructure/scripts/deploy-frontends.sh`
-   - Replace `WEB_BUCKET` and `PORTAL_BUCKET` with your real bucket names (`s3://apex-veritas-web-prod`).
-5. Open `packages/web/.env` and `packages/portal/.env` locally and ensure the `VITE_API_URL` points to your live EC2 Public IP (e.g. `http://<EC2-PUBLIC-IP>/api`).
+   - Replace `WEB_BUCKET` and `PORTAL_BUCKET` with your real bucket names (`s3://apex-veritas` and `s3://apex-veritas-portal`).
+5. The `.env.production` files in `packages/web/` and `packages/portal/` are already configured with `VITE_API_URL=http://54.162.123.207/api`. Vite uses these automatically when you run `npm run build`.
 6. Run the script from your local terminal:
    ```bash
    chmod +x infrastructure/scripts/deploy-frontends.sh

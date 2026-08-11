@@ -39,7 +39,11 @@ cron.schedule('0 8 * * *', async () => {
       });
       
       // WhatsApp notification
-      sendWhatsAppMessage('+15555555555', message);
+      const targetPhone = doc.uploadedBy.phoneNumber || '+254745333763';
+      if (!doc.uploadedBy.phoneNumber) {
+        logger.info(`User ${doc.uploadedBy.email} has no registered phone number. Using fallback number: ${targetPhone}`);
+      }
+      sendWhatsAppMessage(targetPhone, message);
     }
 
     // 2. Overdue CAPA Actions

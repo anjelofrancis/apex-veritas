@@ -16,7 +16,8 @@ export default function Contact() {
     setState('sending');
     setError(null);
     try {
-      const res = await fetch('/api/public/contact', {
+      const API_BASE = import.meta.env.VITE_API_URL || '/api';
+      const res = await fetch(`${API_BASE}/public/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

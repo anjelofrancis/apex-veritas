@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { tokenStore } from './tokenStore';
 
-export const api = axios.create({ baseURL: '/api' });
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+export const api = axios.create({ baseURL: API_BASE });
 
 // The auth provider registers a callback here so a failed refresh can drop the
 // React tree back to the login screen. Without a listener we still clear the

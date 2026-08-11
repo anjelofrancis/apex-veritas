@@ -23,7 +23,8 @@ export default function Templates() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/public/templates')
+    const API_BASE = import.meta.env.VITE_API_URL || '/api';
+    fetch(`${API_BASE}/public/templates`)
       .then((res) => {
         if (!res.ok) throw new Error(`Catalogue unavailable (${res.status})`);
         return res.json();
