@@ -11,7 +11,6 @@ router.post(
   requireRole('CLIENT_ADMIN', 'SUPER_ADMIN'),
   controller.createCheckoutSession
 );
-// NOTE: webhook route is mounted separately in server.js with express.raw()
-// so Stripe's signature verification sees the untouched request body.
+router.post('/webhook', controller.handleWebhook);
 
 module.exports = router;

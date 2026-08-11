@@ -22,13 +22,7 @@ app.use(compression());
 app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
 
-// Stripe webhook needs the raw (unparsed) body for signature verification,
-// so it must be mounted BEFORE express.json().
-app.post(
-  '/api/subscriptions/webhook',
-  express.raw({ type: 'application/json' }),
-  subscriptionsController.handleWebhook
-);
+
 
 app.use(express.json());
 app.use(cookieParser());

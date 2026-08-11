@@ -9,9 +9,9 @@ module.exports = {
     accessExpiresIn: '15m',
     refreshExpiresIn: '7d',
   },
-  stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY,
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  paystack: {
+    secretKey: process.env.PAYSTACK_SECRET_KEY,
+    publicKey: process.env.PAYSTACK_PUBLIC_KEY,
   },
   s3: {
     bucket: process.env.S3_BUCKET,

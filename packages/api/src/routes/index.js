@@ -15,6 +15,6 @@ router.use('/subscriptions', require('../modules/subscriptions/routes'));
 router.use('/notifications', require('../modules/notifications/routes'));
 router.use('/admin', require('../modules/admin/routes'));
 router.use('/orders', require('../modules/orders/routes'));
-router.use('/stripe', require('../modules/orders/stripe'));
+router.use('/paystack', require('../modules/orders/paystack'));
 
 module.exports = router;
