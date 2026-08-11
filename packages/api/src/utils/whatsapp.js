@@ -1,5 +1,4 @@
 const twilio = require('twilio');
-const logger = require('./logger');
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -12,7 +11,7 @@ if (accountSid && authToken) {
 
 const sendWhatsAppMessage = async (to, message) => {
   if (!client) {
-    logger.info(`[DEV] WhatsApp message would be sent to ${to}: ${message}`);
+    console.log(`[DEV] WhatsApp message would be sent to ${to}: ${message}`);
     return;
   }
 
@@ -23,9 +22,9 @@ const sendWhatsAppMessage = async (to, message) => {
       from: fromPhone,
       to: formattedTo
     });
-    logger.info(`WhatsApp message sent to ${formattedTo}`);
+    console.log(`WhatsApp message sent to ${formattedTo}`);
   } catch (error) {
-    logger.error(`Failed to send WhatsApp message: ${error.message}`);
+    console.error(`Failed to send WhatsApp message: ${error.message}`);
   }
 };
 
