@@ -74,7 +74,7 @@ export default function MfaVerify() {
               ref={el => inputRefs.current[i] = el}
               type="text"
               maxLength={1}
-              className="w-10 h-12 text-center border border-divider bg-surface font-mono text-lg focus:outline-none focus:border-blueprint"
+              className="w-10 h-12 text-center border border-divider bg-surface font-mono text-lg text-text-primary focus:outline-none focus:border-blueprint"
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}

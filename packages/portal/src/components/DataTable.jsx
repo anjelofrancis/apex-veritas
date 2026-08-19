@@ -1,6 +1,7 @@
 import React from 'react';
+import { apiErrorMessage } from '../api/client';
 
-export default function DataTable({ columns, data, isLoading, emptyMessage, onRowClick }) {
+export default function DataTable({ columns, data, isLoading, isError, error, emptyMessage, onRowClick }) {
   if (isLoading) {
     return (
       <div className="glass-card bg-surface/50 overflow-hidden">
@@ -9,6 +10,19 @@ export default function DataTable({ columns, data, isLoading, emptyMessage, onRo
           <div className="h-4 bg-white/5 animate-pulse rounded w-full"></div>
           <div className="h-4 bg-white/5 animate-pulse rounded w-full"></div>
         </div>
+      </div>
+    );
+  }
+
+  // A failed fetch must not fall through to the empty state below — "no
+  // records found" would report an outage as a legitimately empty table.
+  if (isError) {
+    return (
+      <div className="glass-card bg-surface/50 border border-oxide/30 p-8 text-center" role="alert">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-oxide">
+          Could not load records
+        </p>
+        <p className="mt-2 text-sm text-text-secondary">{apiErrorMessage(error)}</p>
       </div>
     );
   }

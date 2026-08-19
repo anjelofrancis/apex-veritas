@@ -2,20 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../store/auth';
-import { isInternal } from '../lib/roles';
+import { canManagePlatform } from '../lib/roles';
 import { useTheme } from '../components/ThemeProvider';
 
+// `superAdminOnly` mirrors the API guard on each screen's endpoint — Overview
+// reads /admin/analytics/usage, which is SUPER_ADMIN-only, so showing a
+// consultant that link would only bounce them straight back out.
 const NAV_ITEMS = [
-  { to: '/portal', label: 'Dashboard', end: true },
-  { to: '/portal/compliance', label: 'Compliance' },
-  { to: '/portal/documents', label: 'Documents' },
-  { to: '/portal/audits', label: 'Audits' },
-  { to: '/portal/incidents', label: 'Incidents' },
-  { to: '/portal/training', label: 'Training' },
-  { to: '/portal/tasks', label: 'Tasks' },
-  { to: '/portal/reports', label: 'Reports' },
-  { to: '/portal/messages', label: 'Messages' },
-  { to: '/portal/settings', label: 'Settings' },
+  { to: '/admin', label: 'Overview', end: true, superAdminOnly: true },
+  { to: '/admin/clients', label: 'Tenants' },
+  { to: '/admin/users', label: 'Team' },
+  { to: '/admin/templates', label: 'Templates' },
 ];
 
 function initials(user) {
@@ -61,34 +58,32 @@ function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="h-8 w-8 rounded-full bg-surface border border-divider text-text-primary flex items-center justify-center font-mono text-xs uppercase hover:border-amber transition-colors"
+        className="h-8 w-8 rounded-full bg-surface border border-oxide text-text-primary flex items-center justify-center font-mono text-xs uppercase hover:border-amber transition-colors"
       >
         {initials(user)}
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-60 glass-card bg-surface border border-divider shadow-xl overflow-hidden"
+          className="absolute right-0 z-20 mt-2 w-60 glass-card bg-surface border border-oxide shadow-xl overflow-hidden"
         >
           <div className="border-b border-divider px-4 py-3">
             <p className="text-sm font-medium text-text-primary truncate">
               {user?.firstName} {user?.lastName}
             </p>
             <p className="font-mono text-[10px] text-text-secondary truncate">{user?.email}</p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted mt-1">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-oxide mt-1">
               {user?.role?.replace(/_/g, ' ')}
             </p>
           </div>
-          {isInternal(user) && (
-            <Link
-              to="/admin"
-              role="menuitem"
-              className="block w-full px-4 py-2.5 text-left text-sm text-oxide hover:bg-white/5 transition-colors border-b border-divider"
-              onClick={() => setOpen(false)}
-            >
-              Admin Panel
-            </Link>
-          )}
+          <Link
+            to="/portal"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block w-full px-4 py-2.5 text-left text-sm text-text-primary hover:bg-white/5 transition-colors border-b border-divider"
+          >
+            Back to Portal
+          </Link>
           <button
             type="button"
             role="menuitem"
@@ -103,21 +98,23 @@ function UserMenu() {
   );
 }
 
-export default function PortalLayout() {
+export default function AdminLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const navItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || canManagePlatform(user));
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-56 shrink-0 border-r border-divider bg-surface/50 backdrop-blur-md">
-        <div className="border-b border-divider px-5 py-5 flex items-center gap-3">
+      <aside className="w-56 shrink-0 border-r border-oxide/50 bg-black/10 backdrop-blur-md">
+        <div className="border-b border-oxide/50 px-5 py-5 flex items-center gap-3">
           <img src="/logo.jpg" alt="Apex Veritas Logo" className="w-8 h-8 rounded-md object-cover" />
           <div>
-            <p className="font-display text-sm font-bold gradient-text tracking-tight">APEX VERITAS</p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-text-secondary mt-0.5">Client Portal</p>
+            <p className="font-display text-sm font-bold text-oxide tracking-tight">APEX VERITAS</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-text-secondary mt-0.5">Admin Command</p>
           </div>
         </div>
         <nav className="flex flex-col gap-0.5 p-3">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -125,11 +122,11 @@ export default function PortalLayout() {
               className={({ isActive }) =>
                 `px-3 py-2 text-sm font-body rounded-lg transition-all duration-300 relative ${
                   isActive
-                    ? 'text-amber font-medium shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                    ? 'text-oxide font-medium shadow-[0_0_10px_rgba(239,68,68,0.2)]'
                     : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
                 }`
               }
-              style={({ isActive }) => isActive ? { backgroundColor: 'color-mix(in srgb, var(--color-amber) 10%, transparent)' } : undefined}
+              style={({ isActive }) => isActive ? { backgroundColor: 'color-mix(in srgb, var(--color-oxide) 10%, transparent)' } : undefined}
             >
               {item.label}
             </NavLink>
@@ -137,14 +134,15 @@ export default function PortalLayout() {
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between border-b border-divider bg-surface/30 backdrop-blur-md px-6 py-3">
-          <p className="font-mono text-xs text-text-muted uppercase tracking-widest">
-            {NAV_ITEMS.find((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)))?.label || 'Overview'}
+        <header className="flex items-center justify-between border-b border-oxide/50 bg-black/10 backdrop-blur-md px-6 py-3">
+          <p className="font-mono text-xs text-oxide uppercase tracking-widest flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-oxide animate-pulse"></span>
+            Admin // {navItems.find((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)))?.label || 'Overview'}
           </p>
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
-              className="h-8 w-8 rounded-full bg-surface border border-divider text-text-secondary flex items-center justify-center hover:border-amber transition-colors"
+              className="h-8 w-8 rounded-full bg-surface border border-oxide/50 text-text-secondary flex items-center justify-center hover:border-oxide transition-colors"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
@@ -160,7 +158,7 @@ export default function PortalLayout() {
             <UserMenu />
           </div>
         </header>
-        <main className="flex-1 p-6 relative overflow-y-auto">
+        <main className="flex-1 p-6 relative overflow-y-auto bg-black/5">
           <Outlet />
         </main>
       </div>

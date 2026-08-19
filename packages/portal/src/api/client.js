@@ -68,3 +68,13 @@ api.interceptors.response.use(
     }
   },
 );
+
+/**
+ * Pulls something showable out of a rejected request. The API answers errors
+ * with `{ error: string }` throughout (see middleware/errorHandler.js), so that
+ * field is the first choice; axios' own message covers the network-level
+ * failures where no response ever arrived.
+ */
+export function apiErrorMessage(error, fallback = 'Something went wrong.') {
+  return error?.response?.data?.error || error?.message || fallback;
+}

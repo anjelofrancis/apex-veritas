@@ -1,8 +1,16 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import RequireAuth from './components/RequireAuth';
+import RequireRole from './components/RequireRole';
+import { INTERNAL_ROLES, ROLES } from './lib/roles';
 import PortalLayout from './layouts/PortalLayout';
+import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminClients from './pages/admin/AdminClients';
+import AdminTemplates from './pages/admin/AdminTemplates';
+import AdminUsers from './pages/admin/AdminUsers';
 
 import Compliance from './pages/Compliance';
 import Documents from './pages/Documents';
@@ -32,6 +40,24 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="messages" element={<Messages />} />
           <Route path="settings" element={<Settings />} />
+        </Route>
+
+        <Route element={<RequireRole allowedRoles={INTERNAL_ROLES} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            {/* Platform analytics is SUPER_ADMIN-only on the API, so sending a
+                consultant to it as their landing page would 403. They start at
+                Tenants instead — the first admin screen they can read. */}
+            <Route
+              element={
+                <RequireRole allowedRoles={[ROLES.SUPER_ADMIN]} redirectTo="/admin/clients" />
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+            </Route>
+            <Route path="clients" element={<AdminClients />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="templates" element={<AdminTemplates />} />
+          </Route>
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/portal" replace />} />
