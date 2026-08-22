@@ -30,10 +30,10 @@ const Features = () => {
     <section className="py-24 px-6 relative z-10">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-display font-bold text-gray-900 mb-4 transition-colors duration-700">
+          <h2 className="text-4xl font-display font-bold text-text-primary mb-4 transition-colors duration-700">
             Everything you need to scale
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto transition-colors duration-700">
+          <p className="text-xl text-text-secondary max-w-2xl mx-auto transition-colors duration-700">
             A complete suite of tools designed to help you understand your users and grow your business.
           </p>
         </div>
@@ -46,13 +46,13 @@ const Features = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-surface/80 backdrop-blur-sm p-8 rounded-2xl border border-divider shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-6 border border-gray-100">
+              <div className="w-12 h-12 bg-background rounded-xl flex items-center justify-center mb-6 border border-divider">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-bold text-text-primary mb-3">{feature.title}</h3>
+              <p className="text-text-secondary leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>
