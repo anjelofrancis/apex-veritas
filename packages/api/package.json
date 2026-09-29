@@ -16,6 +16,13 @@
   "prisma": {
     "seed": "node prisma/seed.js"
   },
+  "jest": {
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "multer-cloud-storage": "<rootDir>/__mocks__/multer-cloud-storage.js",
+      "^.*config/db$": "<rootDir>/__mocks__/prisma.js"
+    }
+  },
   "dependencies": {
     "@google-cloud/storage": "^8.2.0",
     "@prisma/client": "^5.20.0",
