@@ -1,16 +1,12 @@
 #!/bin/bash
-# Apex Veritas Frontend S3 Deployment Script
-# This script builds the React SPAs and syncs them to your AWS S3 buckets.
+# Apex Veritas Frontend GCP Deployment Script
+# This script builds the React SPAs and syncs them to your Google Cloud Storage buckets.
 
 set -e
 
-# Configuration - Replace these with your actual S3 bucket names
-WEB_BUCKET="s3://your-web-bucket-name"
-PORTAL_BUCKET="s3://your-portal-bucket-name"
-
-# CloudFront Distribution IDs (Optional - for cache invalidation)
-# CLOUDFRONT_WEB_ID="E1XXXXXXXXXXXX"
-# CLOUDFRONT_PORTAL_ID="E2XXXXXXXXXXXX"
+# Configuration - Replace these with your actual GCS bucket names
+WEB_BUCKET="gs://apexveritas-web-prod"
+PORTAL_BUCKET="gs://apexveritas-portal-prod"
 
 echo "Building and deploying Apex Veritas Frontends..."
 
@@ -18,25 +14,19 @@ echo "Building and deploying Apex Veritas Frontends..."
 echo "Building Marketing Web (packages/web)..."
 npm run build -w packages/web
 
-echo "Syncing Web to S3 ($WEB_BUCKET)..."
-aws s3 sync packages/web/dist $WEB_BUCKET --delete
+echo "Syncing Web to GCS ($WEB_BUCKET)..."
+gcloud storage rsync packages/web/dist $WEB_BUCKET --recursive --delete-unmatched-destination-objects
 
 # 2. Build and Deploy Portal
 echo "Building Client Portal (packages/portal)..."
 npm run build -w packages/portal
 
-echo "Syncing Portal to S3 ($PORTAL_BUCKET)..."
-aws s3 sync packages/portal/dist $PORTAL_BUCKET --delete
+echo "Syncing Portal to GCS ($PORTAL_BUCKET)..."
+gcloud storage rsync packages/portal/dist $PORTAL_BUCKET --recursive --delete-unmatched-destination-objects
 
-# 3. Optional: Invalidate CloudFront Cache
-# if [ ! -z "$CLOUDFRONT_WEB_ID" ]; then
-#   echo "Invalidating CloudFront cache for Web..."
-#   aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_WEB_ID --paths "/*"
-# fi
-
-# if [ ! -z "$CLOUDFRONT_PORTAL_ID" ]; then
-#   echo "Invalidating CloudFront cache for Portal..."
-#   aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_PORTAL_ID --paths "/*"
-# fi
+# 3. Optional: Configure bucket to act as a website
+# This only needs to be run once, but included here for completeness
+# gcloud storage buckets update $WEB_BUCKET --web-main-page-suffix=index.html --web-error-page=index.html
+# gcloud storage buckets update $PORTAL_BUCKET --web-main-page-suffix=index.html --web-error-page=index.html
 
 echo "Frontend Deployment Complete!"

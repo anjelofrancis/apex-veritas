@@ -134,7 +134,7 @@ export default function AdminLayout() {
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between border-b border-oxide/50 bg-black/10 backdrop-blur-md px-6 py-3">
+        <header className="flex items-center justify-between border-b border-oxide/50 bg-black/10 backdrop-blur-md px-6 py-3 relative z-[999]">
           <p className="font-mono text-xs text-oxide uppercase tracking-widest flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-oxide animate-pulse"></span>
             Admin // {navItems.find((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)))?.label || 'Overview'}
