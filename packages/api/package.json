@@ -19,12 +19,12 @@
   "jest": {
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "multer-cloud-storage": "<rootDir>/__mocks__/multer-cloud-storage.js",
+      "^.*documents/azureBlobStorage$": "<rootDir>/__mocks__/azureBlobStorage.js",
       "^.*config/db$": "<rootDir>/__mocks__/prisma.js"
     }
   },
   "dependencies": {
-    "@google-cloud/storage": "^8.2.0",
+    "@azure/storage-blob": "^12.34.0",
     "@prisma/client": "^5.20.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -37,7 +37,6 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "multer-cloud-storage": "^5.0.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^6.10.1",
     "otplib": "^12.0.1",

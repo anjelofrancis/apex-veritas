@@ -1,7 +1,4 @@
-// Jest mock for multer-cloud-storage (ESM package, incompatible with Jest CJS mode)
-// This stub provides a minimal multer storage engine that stores files in memory during tests.
-const { Readable } = require('stream');
-
+// Jest mock for the Azure Blob storage engine: drains uploads in memory instead of calling Azure.
 function MockStorageEngine() {}
 
 MockStorageEngine.prototype._handleFile = function (req, file, cb) {
@@ -9,9 +6,10 @@ MockStorageEngine.prototype._handleFile = function (req, file, cb) {
   const chunks = [];
   file.stream.on('data', (chunk) => chunks.push(chunk));
   file.stream.on('end', () => {
+    const filename = `${Date.now()}-${file.originalname}`;
     cb(null, {
-      filename: `${Date.now()}-${file.originalname}`,
-      path: `gs://mock-bucket/${Date.now()}-${file.originalname}`,
+      filename,
+      path: `https://mock.blob.core.windows.net/documents/${filename}`,
       size: Buffer.concat(chunks).length,
     });
   });
@@ -22,8 +20,4 @@ MockStorageEngine.prototype._removeFile = function (req, file, cb) {
   cb(null);
 };
 
-module.exports = {
-  storageEngine: function (opts) {
-    return new MockStorageEngine();
-  },
-};
+module.exports = () => new MockStorageEngine();
