@@ -1,17 +1,11 @@
 const multer = require('multer');
-const MulterGoogleCloudStorage = require('multer-cloud-storage');
-const path = require('path');
+const azureBlobStorage = require('./azureBlobStorage');
 const prisma = require('../../config/db');
 
 const upload = multer({
-  storage: new MulterGoogleCloudStorage.storageEngine({
-    bucket: process.env.GCS_BUCKET || 'apex-veritas-documents',
-    projectId: process.env.GCP_PROJECT_ID || 'mock-project-id',
-    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || undefined,
-    filename: function (req, file, cb) {
-      const ext = path.extname(file.originalname);
-      cb(null, `${Date.now()}${ext}`);
-    }
+  storage: azureBlobStorage({
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    container: process.env.AZURE_STORAGE_CONTAINER || 'documents',
   })
 });
 
