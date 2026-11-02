@@ -25,9 +25,9 @@ module.exports = {
         oxide: 'rgb(var(--rgb-oxide) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'sans-serif'],
-        body: ['"Inter"', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'monospace'],
+        display: ['"Google Sans"', 'sans-serif'],
+        body: ['"Google Sans"', 'sans-serif'],
+        mono: ['"Google Sans Code"', 'monospace'],
       },
       backgroundImage: {
         'gradient-mesh': 'radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%)',
