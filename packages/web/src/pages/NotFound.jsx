@@ -16,7 +16,7 @@ export default function NotFound() {
           <div className="relative z-10">
             <p className="font-mono text-sm uppercase tracking-widest text-oxide mb-4">Error 404</p>
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-text-primary mb-6">
-              This sheet is <span className="text-transparent bg-clip-text bg-gradient-to-r from-oxide to-amber-DEFAULT">not in the set</span>
+              This sheet is <span className="text-transparent bg-clip-text bg-gradient-to-r from-oxide to-amber">not in the set</span>
             </h1>
             <p className="max-w-lg mx-auto text-text-secondary text-lg mb-12">
               The page you asked for does not exist. It may have been renamed, or the link that
