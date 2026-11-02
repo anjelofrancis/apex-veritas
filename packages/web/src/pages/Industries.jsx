@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import PageHeader from '../components/PageHeader';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { EASE, Reveal } from '../components/motion';
 
 const INDUSTRIES = [
   {
@@ -36,62 +38,89 @@ const INDUSTRIES = [
 ];
 
 export default function Industries() {
-  const [gridRef, , gridClass] = useScrollAnimation({ threshold: 0.1 });
+  const [active, setActive] = useState(0);
+  const industry = INDUSTRIES[active];
 
   return (
-    <main className="bg-background min-h-screen">
+    <main className="min-h-screen bg-background">
       <PageHeader
         eyebrow="Industries"
         title="Compliance shaped to the risks you actually carry"
         intro="The obligations that matter differ by sector. We start from the hazards on your sites and the regulators who inspect them."
-        docRef="AV-IND-01"
       />
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute -left-64 top-1/4 w-[500px] h-[500px] bg-teal-DEFAULT/10 rounded-full blur-[120px] pointer-events-none"></div>
-        <div className="absolute -right-64 bottom-1/4 w-[500px] h-[500px] bg-amber-DEFAULT/10 rounded-full blur-[120px] pointer-events-none"></div>
-        
-        <div className="mx-auto max-w-[1280px] px-6 relative z-10" ref={gridRef}>
-          <div className={`grid gap-8 md:grid-cols-2 lg:grid-cols-3 ${gridClass}`}>
-            {INDUSTRIES.map((industry, i) => (
-              <article 
-                key={industry.name} 
-                className="glass-card p-8 flex flex-col group hover:-translate-y-2 hover:border-white/30 transition-all duration-500"
-                style={{ animationDelay: `${i * 0.15}s` }}
+      <section className="mx-auto max-w-[1280px] px-6 py-24">
+        <Reveal className="grid gap-10 lg:grid-cols-[1fr_1.3fr]">
+          <div role="tablist" aria-label="Industries" aria-orientation="vertical" className="flex flex-col gap-1">
+            {INDUSTRIES.map((item, i) => (
+              <button
+                key={item.name}
+                type="button"
+                role="tab"
+                id={`industry-tab-${i}`}
+                aria-selected={i === active}
+                aria-controls="industry-panel"
+                onClick={() => setActive(i)}
+                className="relative rounded-lg px-5 py-4 text-left"
               >
-                <div className="w-12 h-1 bg-gradient-to-r from-teal-DEFAULT to-amber-DEFAULT rounded-full mb-6"></div>
-                <h2 className="font-display text-2xl font-bold text-text-primary mb-3 group-hover:text-teal-DEFAULT transition-colors duration-300">{industry.name}</h2>
-                <p className="text-text-secondary text-sm leading-relaxed mb-8 flex-1">{industry.pressures}</p>
-                
-                <div className="mt-auto pt-6 border-t border-divider">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted mb-3">
-                    Typical framework
-                  </p>
-                  <ul className="flex flex-wrap gap-2">
-                    {industry.regs.map((reg) => (
-                      <li
-                        key={reg}
-                        className="bg-white/5 border border-divider px-3 py-1.5 rounded text-xs font-mono text-text-primary"
-                      >
-                        {reg}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
+                {i === active && (
+                  <motion.span
+                    layoutId="industry-highlight"
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-lg bg-teal/10 ring-1 ring-teal/30"
+                    transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+                  />
+                )}
+                <span className={`relative font-display text-lg font-semibold ${i === active ? 'text-text-primary' : 'text-text-secondary'}`}>
+                  {item.name}
+                </span>
+              </button>
             ))}
           </div>
 
-          <div className="mt-20 glass-card p-8 text-center max-w-3xl mx-auto border-divider">
-            <p className="text-text-secondary mb-6">
-              Operating in a sector not listed here? The underlying systems are the same — the legal
-              register and risk profile are what get rebuilt.
-            </p>
-            <Link to="/contact" className="btn-primary">
-              Tell us about your operation
-            </Link>
+          <div
+            id="industry-panel"
+            role="tabpanel"
+            aria-labelledby={`industry-tab-${active}`}
+            className="glass-card min-h-[340px] p-8 sm:p-12"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={industry.name}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.32, ease: EASE }}
+              >
+                <h2 className="font-display text-3xl font-bold sm:text-4xl">{industry.name}</h2>
+                <p className="mt-5 text-lg leading-relaxed text-text-secondary">{industry.pressures}</p>
+                <p className="mb-3 mt-10 font-mono text-[11px] uppercase tracking-widest text-text-muted">
+                  Typical framework
+                </p>
+                <ul className="flex flex-wrap gap-2">
+                  {industry.regs.map((reg, i) => (
+                    <motion.li
+                      key={reg}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 + i * 0.07 }}
+                      className="rounded-full border border-divider bg-background px-4 py-2 font-mono text-xs text-text-primary"
+                    >
+                      {reg}
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
+        </Reveal>
+
+        <Reveal className="glass-card mx-auto mt-20 max-w-3xl p-8 text-center">
+          <p className="mb-6 text-text-secondary">
+            Operating in a sector not listed here? The underlying systems are the same — the legal
+            register and risk profile are what get rebuilt.
+          </p>
+          <Link to="/contact" className="btn-primary">Tell us about your operation</Link>
+        </Reveal>
       </section>
     </main>
   );
