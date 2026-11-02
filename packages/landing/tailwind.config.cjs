@@ -14,15 +14,15 @@ module.exports = {
           muted: 'var(--color-text-muted)',
         },
         amber: {
-          DEFAULT: 'var(--color-amber)',
+          DEFAULT: 'rgb(var(--rgb-amber) / <alpha-value>)',
           grad1: 'var(--color-amber-grad1)',
           grad2: 'var(--color-amber-grad2)',
         },
         teal: {
-          DEFAULT: 'var(--color-teal)',
+          DEFAULT: 'rgb(var(--rgb-teal) / <alpha-value>)',
           grad: 'var(--color-teal-grad)',
         },
-        oxide: 'var(--color-oxide)',
+        oxide: 'rgb(var(--rgb-oxide) / <alpha-value>)',
       },
       fontFamily: {
         display: ['"Space Grotesk"', 'sans-serif'],
