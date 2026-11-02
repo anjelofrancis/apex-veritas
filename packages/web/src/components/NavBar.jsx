@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
 
 const LINKS = [
@@ -15,9 +16,9 @@ const LINKS = [
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || 'http://localhost:5173';
 
 function linkClass({ isActive }) {
-  return isActive
-    ? 'text-text-primary font-medium relative after:content-[""] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-px after:bg-gradient-amber'
-    : 'text-text-muted hover:text-text-primary transition-colors relative after:content-[""] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-px after:bg-gradient-amber after:scale-x-0 hover:after:scale-x-100 after:origin-left after:transition-transform after:duration-300';
+  return `relative rounded-full px-3 py-1.5 transition-colors ${
+    isActive ? 'font-medium text-text-primary' : 'text-text-secondary hover:text-text-primary'
+  }`;
 }
 
 export default function NavBar() {
@@ -34,22 +35,40 @@ export default function NavBar() {
   }, []);
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'backdrop-blur-xl border-b border-divider py-3 shadow-md' : 'bg-transparent py-5'
-      }`}
-      style={scrolled ? { backgroundColor: 'color-mix(in srgb, var(--color-bg-background) 80%, transparent)' } : undefined}
-    >
-      <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-3 font-display text-xl font-bold tracking-tight gradient-text drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]">
-          <img src="/logo.jpg" alt="Apex Veritas Logo" className="w-8 h-8 rounded-md object-cover" />
+    // Always dark: every page opens on a dark hero, and this keeps the text legible
+    // on the light sections below it in both themes.
+    <header className={`dark fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-5'}`}>
+      {/* The blur sits on its own layer: backdrop-filter on the header itself would
+          trap the fixed mobile menu inside the header's box. */}
+      <div
+        aria-hidden="true"
+        style={{ backgroundColor: 'rgb(10 15 28 / 0.88)' }}
+        className={`absolute inset-0 -z-10 border-b border-divider shadow-md backdrop-blur-xl transition-opacity duration-300 ${
+          scrolled || open ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-6">
+        <Link to="/" className="flex shrink-0 items-center gap-3 font-display text-lg font-bold tracking-tight text-text-primary">
+          <img src="./logo.jpg" alt="" className="h-8 w-8 rounded-md object-cover" />
           APEX VERITAS
         </Link>
 
-        <nav className="hidden gap-8 font-body text-sm lg:flex">
+        <nav className="hidden gap-1 font-body text-sm xl:flex">
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.to === '/'} className={linkClass}>
-              {link.label}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active"
+                      aria-hidden="true"
+                      className="absolute inset-0 rounded-full bg-white/10"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative">{link.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -61,7 +80,7 @@ export default function NavBar() {
           >
             Contact
           </Link>
-          <a href={PORTAL_URL} className="glass-card px-5 py-2 text-xs font-semibold text-text-primary hover:border-amber-DEFAULT hover:shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all">
+          <a href={PORTAL_URL} className="glass-card hidden whitespace-nowrap px-5 py-2 text-xs font-semibold text-text-primary hover:border-amber sm:inline-block">
             Client Portal
           </a>
           <button
@@ -85,7 +104,7 @@ export default function NavBar() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label="Toggle navigation"
-            className="glass-card p-2.5 lg:hidden border-white/20"
+            className="glass-card p-2.5 xl:hidden border-white/20"
           >
             <div className={`w-5 h-0.5 bg-text-primary transition-all duration-300 ${open ? 'rotate-45 translate-y-1.5' : ''}`} />
             <div className={`w-5 h-0.5 bg-text-primary mt-1 transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
@@ -96,10 +115,9 @@ export default function NavBar() {
 
       {/* Mobile Menu */}
       <div 
-        className={`lg:hidden fixed inset-0 top-[60px] backdrop-blur-xl transition-all duration-500 ease-in-out ${
+        className={`xl:hidden fixed inset-0 top-[60px] overflow-y-auto bg-background transition-all duration-300 ease-in-out ${
           open ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'
         }`}
-        style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-background) 95%, transparent)' }}
       >
         <nav
           id="mobile-nav"
@@ -119,6 +137,9 @@ export default function NavBar() {
           <NavLink to="/contact" onClick={() => setOpen(false)} className="text-xl font-display text-text-primary mt-4 pt-4 border-t border-divider">
             Contact Us
           </NavLink>
+          <a href={PORTAL_URL} className="text-xl font-display text-text-primary">
+            Client Portal
+          </a>
         </nav>
       </div>
     </header>
