@@ -103,9 +103,23 @@ export default function AdminLayout() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const navItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || canManagePlatform(user));
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => setNavOpen(false), [location.pathname]);
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-56 shrink-0 border-r border-oxide/50 bg-black/10 backdrop-blur-md">
+      {navOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setNavOpen(false)}
+          className="fixed inset-0 z-[1000] bg-black/50 md:hidden"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-[1001] w-56 shrink-0 overflow-y-auto border-r border-oxide/50 bg-surface transition-transform duration-300 md:static md:translate-x-0 ${
+          navOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="border-b border-oxide/50 px-5 py-5 flex items-center gap-3">
           <img src="/logo.jpg" alt="Apex Veritas Logo" className="w-8 h-8 rounded-md object-cover" />
           <div>
@@ -133,12 +147,22 @@ export default function AdminLayout() {
           ))}
         </nav>
       </aside>
-      <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between border-b border-oxide/50 bg-black/10 backdrop-blur-md px-6 py-3 relative z-[999]">
-          <p className="font-mono text-xs text-oxide uppercase tracking-widest flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-oxide animate-pulse"></span>
-            Admin // {navItems.find((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)))?.label || 'Overview'}
-          </p>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between border-b border-oxide/50 bg-black/10 backdrop-blur-md px-4 sm:px-6 py-3 relative z-[999]">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setNavOpen(true)}
+              aria-label="Open navigation"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-oxide/50 text-text-primary md:hidden"
+            >
+              ☰
+            </button>
+            <p className="font-mono text-xs text-oxide uppercase tracking-widest flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-oxide animate-pulse"></span>
+              Admin // {navItems.find((i) => (i.end ? location.pathname === i.to : location.pathname.startsWith(i.to)))?.label || 'Overview'}
+            </p>
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
@@ -158,8 +182,10 @@ export default function AdminLayout() {
             <UserMenu />
           </div>
         </header>
-        <main className="flex-1 p-6 relative overflow-y-auto bg-black/5">
-          <Outlet />
+        <main className="flex-1 p-4 sm:p-6 relative overflow-y-auto bg-black/5">
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
