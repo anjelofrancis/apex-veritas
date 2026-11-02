@@ -1,6 +1,8 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import PageHeader from '../components/PageHeader';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
+import { EASE, Reveal } from '../components/motion';
 
 const JURISDICTIONS = [
   {
@@ -36,75 +38,108 @@ const JURISDICTIONS = [
   },
 ];
 
+const ALL = 'All';
+
 export default function ComplianceHub() {
-  const [contentRef, , contentClass] = useScrollAnimation({ threshold: 0.05 });
+  const [filter, setFilter] = useState(ALL);
+  const [query, setQuery] = useState('');
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return JURISDICTIONS.filter((j) => filter === ALL || j.name === filter).flatMap((j) =>
+      j.items
+        .filter(([ref, summary]) => !q || `${ref} ${summary}`.toLowerCase().includes(q))
+        .map(([ref, summary]) => ({ ref, summary, jurisdiction: j.name, regulator: j.regulator })),
+    );
+  }, [filter, query]);
 
   return (
-    <main className="bg-background min-h-screen">
+    <main className="min-h-screen bg-background">
       <PageHeader
         eyebrow="Compliance Hub"
         title="The statutes and standards we build registers from"
         intro="A plain-language index of the obligations that apply across Kenya, the UAE, and the ISO management standards. Your register is built from these, filtered to your sites."
-        docRef="AV-HUB-01"
       />
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-10 pointer-events-none"></div>
-        
-        <div className="mx-auto max-w-[1000px] px-6 relative z-10" ref={contentRef}>
-          <div className={`space-y-16 ${contentClass}`}>
-            {JURISDICTIONS.map((jurisdiction, i) => (
-              <div key={jurisdiction.name} className="glass-card p-8 sm:p-10" style={{ animationDelay: `${i * 0.2}s` }}>
-                <div className="flex flex-wrap items-end justify-between gap-4 border-b border-divider pb-6 mb-8">
-                  <h2 className="font-display text-3xl font-bold text-text-primary">
-                    {jurisdiction.name}
-                  </h2>
-                  <p className="font-mono text-xs uppercase tracking-widest text-teal-DEFAULT bg-teal-DEFAULT/10 px-3 py-1.5 rounded">
-                    {jurisdiction.regulator}
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  {jurisdiction.items.map(([ref, summary]) => (
-                    <div key={ref} className="bg-white/5 border border-divider rounded-lg p-5 sm:p-6 hover:border-teal-DEFAULT/30 transition-colors flex flex-col sm:flex-row gap-4 sm:gap-8">
-                      <dt className="font-mono text-sm font-bold text-text-primary shrink-0 sm:w-48 pt-1">
-                        {ref}
-                      </dt>
-                      <dd className="text-sm text-text-secondary leading-relaxed flex-1">
-                        {summary}
-                      </dd>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <section className="mx-auto max-w-[1000px] px-6 py-24">
+        <Reveal className="flex flex-col gap-5">
+          <div>
+            <label htmlFor="hub-search" className="field-label">Search the index</label>
+            <input
+              id="hub-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Try “waste”, “ISO 45001” or “injury”"
+              className="field"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by jurisdiction">
+            {[ALL, ...JURISDICTIONS.map((j) => j.name)].map((name) => (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={filter === name}
+                onClick={() => setFilter(name)}
+                className="relative rounded-full border border-divider px-4 py-2 text-sm"
+              >
+                {filter === name && (
+                  <motion.span
+                    layoutId="hub-filter"
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-full bg-amber/15 ring-1 ring-amber/50"
+                    transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+                  />
+                )}
+                <span className="relative text-text-primary">{name}</span>
+              </button>
             ))}
           </div>
+        </Reveal>
 
-          <div className="mt-16 glass-card p-8 border-amber-DEFAULT/30 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-DEFAULT/10 blur-[60px] pointer-events-none"></div>
-            <div className="flex items-start gap-4 relative z-10">
-              <div className="w-10 h-10 rounded-full bg-amber-DEFAULT/20 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-amber-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-mono text-xs uppercase tracking-widest text-amber-DEFAULT font-bold mb-2">
-                  Not legal advice
-                </p>
-                <p className="text-sm text-text-secondary leading-relaxed max-w-2xl">
-                  This index is a working summary maintained by our consultants, not a legal
-                  interpretation. Obligations change and apply differently by site, headcount and
-                  activity.{' '}
-                  <Link to="/contact" className="text-text-primary hover:text-amber-DEFAULT underline underline-offset-4 transition-colors">
-                    Ask us to confirm what applies to you
-                  </Link>
-                  .
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <p aria-live="polite" className="mb-4 mt-8 font-mono text-xs uppercase tracking-widest text-text-muted">
+          {rows.length} {rows.length === 1 ? 'entry' : 'entries'}
+        </p>
+
+        <motion.ul layout className="space-y-3">
+          <AnimatePresence initial={false}>
+            {rows.map((row) => (
+              <motion.li
+                key={row.ref}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.28, ease: EASE }}
+                className="glass-card flex flex-col gap-3 p-5 sm:flex-row sm:gap-8 sm:p-6"
+              >
+                <div className="shrink-0 sm:w-56">
+                  <p className="font-mono text-sm font-medium text-text-primary">{row.ref}</p>
+                  <p className="mt-1 text-xs text-text-muted">{row.regulator}</p>
+                </div>
+                <p className="flex-1 text-sm leading-relaxed text-text-secondary">{row.summary}</p>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </motion.ul>
+
+        {rows.length === 0 && (
+          <p className="glass-card p-8 text-center text-text-secondary">
+            Nothing in the index matches that.{' '}
+            <Link to="/contact" className="text-text-primary underline underline-offset-4">Ask a consultant</Link>.
+          </p>
+        )}
+
+        <Reveal className="glass-card mt-14 border-amber/40 p-8">
+          <p className="mb-2 font-mono text-xs font-medium uppercase tracking-widest text-amber">Not legal advice</p>
+          <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
+            This index is a working summary maintained by our consultants, not a legal
+            interpretation. Obligations change and apply differently by site, headcount and activity.{' '}
+            <Link to="/contact" className="text-text-primary underline underline-offset-4 hover:text-amber">
+              Ask us to confirm what applies to you
+            </Link>
+            .
+          </p>
+        </Reveal>
       </section>
     </main>
   );
